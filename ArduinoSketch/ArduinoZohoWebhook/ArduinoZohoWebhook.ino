@@ -1,29 +1,9 @@
 /*
-  Web client
-
-  This sketch connects to a website (http://www.google.com)
-  using the WiFi module.
-
-  This example is written for a network using WPA encryption. For
-  WEP or WPA, change the WiFi.begin() call accordingly.
-
-  This example is written for a network using WPA encryption. For
-  WEP or WPA, change the WiFi.begin() call accordingly.
-
-
-  created 13 July 2010
-  by dlf (Metodo2 srl)
-  modified 31 May 2012
-  by Tom Igoe
-
-  Find the full UNO R4 WiFi Network documentation here:
-  https://docs.arduino.cc/tutorials/uno-r4-wifi/wifi-examples#wi-fi-web-client
+  Arduino to Google Sheets via Zoho Webhook
  */
 
 
 #include "WiFiS3.h"
-
-
 #include "arduino_secrets.h" 
 
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
@@ -33,15 +13,13 @@ char zapikey[] = ZOHO_KEY;
 int keyIndex = 0;            // your network key index number (needed only for WEP)
 
 int status = WL_IDLE_STATUS;
-// if you don't want to use DNS (and reduce your sketch size)
-// use the numeric IP instead of the name for the server:
-//IPAddress server(74,125,232,128);  // numeric IP for Google (no DNS)
-char server[] = "flow.zoho.com";    // name address for Google (using DNS)
+
+char server[] = "flow.zoho.com";  
 
 // Initialize the Ethernet client library
 // with the IP address and port of the server
 // that you want to connect to (port 80 is default for HTTP):
-WiFiClient client;
+WiFiSSLClient client;
 
 /* -------------------------------------------------------------------------- */
 void setup() {
@@ -81,13 +59,16 @@ void setup() {
 
 void send_data() {
   int sensor_reading = analogRead(A0);
-  Serial.println("\nStarting connection to server...");
-  // if you get a connection, report back via serial:
-  if (client.connect(server, 80)) {
-    Serial.println("connected to server");
+  Serial.print("Sensor Value: ");
+  Serial.println(sensor_reading);
+  Serial.print("Starting connection to server...");
+  if (client.connect(server, 443)) {
+    Serial.println("connected to server.");
     // Make a HTTP request:
-    String postData = "GET /731846675/flow/webhook/incoming?zapikey=" + String(zapikey) + "&isdebug=false&arduino=unoR4&sensor=AO&value=" + String(sensor_reading) + " HTTP/1.1";
+    String postData = "GET /731846675/flow/webhook/incoming?zapikey=" + String(zapikey) + "&isdebug=false&arduino=unoR4&sensor=temperature&value=" + String(sensor_reading) + " HTTP/1.1";
     client.println(postData);
+    Serial.println(postData);
+    Serial.println();
     client.println("Host: flow.zoho.com");
     client.println("Connection: close");
     client.println();
@@ -118,17 +99,16 @@ void read_response() {
 void loop() {
 /* -------------------------------------------------------------------------- */  
   send_data();
-  read_response();
+  //read_response();
 
   // if the server's disconnected, stop the client:
   if (!client.connected()) {
     Serial.println();
     Serial.println("disconnecting from server.");
     client.stop();
-
-    // do nothing forevermore:
-    while (true);
   }
+
+  delay(30000);
 }
 
 /* -------------------------------------------------------------------------- */
