@@ -29,13 +29,14 @@
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
 char ssid[] = SECRET_SSID;        // your network SSID (name)
 char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
+char zapikey[] = ZOHO_KEY;
 int keyIndex = 0;            // your network key index number (needed only for WEP)
 
 int status = WL_IDLE_STATUS;
 // if you don't want to use DNS (and reduce your sketch size)
 // use the numeric IP instead of the name for the server:
 //IPAddress server(74,125,232,128);  // numeric IP for Google (no DNS)
-char server[] = "www.google.com";    // name address for Google (using DNS)
+char server[] = "flow.zoho.com";    // name address for Google (using DNS)
 
 // Initialize the Ethernet client library
 // with the IP address and port of the server
@@ -75,18 +76,25 @@ void setup() {
   }
   
   printWifiStatus();
- 
+}
+
+
+void send_data() {
+  int sensor_reading = analogRead(A0);
   Serial.println("\nStarting connection to server...");
   // if you get a connection, report back via serial:
   if (client.connect(server, 80)) {
     Serial.println("connected to server");
     // Make a HTTP request:
-    client.println("GET /search?q=arduino HTTP/1.1");
-    client.println("Host: www.google.com");
+    String postData = "GET /731846675/flow/webhook/incoming?zapikey=" + String(zapikey) + "&isdebug=false&arduino=unoR4&sensor=AO&value=" + String(sensor_reading) + " HTTP/1.1";
+    client.println(postData);
+    client.println("Host: flow.zoho.com");
     client.println("Connection: close");
     client.println();
   }
+
 }
+
 
 /* just wrap the received data up to 80 columns in the serial print*/
 /* -------------------------------------------------------------------------- */
@@ -109,6 +117,7 @@ void read_response() {
 /* -------------------------------------------------------------------------- */
 void loop() {
 /* -------------------------------------------------------------------------- */  
+  send_data();
   read_response();
 
   // if the server's disconnected, stop the client:
